@@ -6,38 +6,38 @@ items:
   metadata:
     annotations: {}
     labels:
-      project: "zookeeper"
+      project: "connect-mysql"
       provider: "debezium"
       version: "0.3-SNAPSHOT"
       group: "io.debezium"
-    name: "zookeeper"
+    name: "connect-mysql"
   spec:
     deprecatedPublicIPs: []
     externalIPs: []
     ports:
-    - port: 2181
+    - port: 80
       protocol: "TCP"
-      targetPort: 2181
+      targetPort: 8083
     selector:
-      project: "zookeeper"
+      project: "connect-mysql"
       provider: "debezium"
       group: "io.debezium"
 - apiVersion: "v1"
   kind: "ReplicationController"
   metadata:
     annotations:
-      fabric8.io/git-branch: "0.2-SNAPSHOT"
-      fabric8.io/git-commit: "e29bd9752f12c166fb989fabebc9cfb3bba4e331"
+      fabric8.io/git-branch: "master"
+      fabric8.io/git-commit: "733729bca970afa5e79b1e47302a7d57d8605f83"
     labels:
-      project: "zookeeper"
+      project: "connect-mysql"
       provider: "debezium"
       version: "0.3-SNAPSHOT"
       group: "io.debezium"
-    name: "zk-standalone"
+    name: "connect-mysql"
   spec:
     replicas: 1
     selector:
-      project: "zookeeper"
+      project: "connect-mysql"
       provider: "debezium"
       version: "0.3-SNAPSHOT"
       group: "io.debezium"
@@ -45,7 +45,7 @@ items:
       metadata:
         annotations: {}
         labels:
-          project: "zookeeper"
+          project: "connect-mysql"
           provider: "debezium"
           version: "0.3-SNAPSHOT"
           group: "io.debezium"
@@ -54,20 +54,30 @@ items:
         - args: []
           command: []
           env:
+          - name: "OFFSET_STORAGE_TOPIC"
+            value: "my-connect-offsets"
+          - name: "HOST_NAME"
+            value: "0.0.0.0"
+          - name: "BOOTSTRAP_SERVERS"
+            value: "kafka:9092"
+          - name: "CONFIG_STORAGE_TOPIC"
+            value: "my-connect-configs"
+          - name: "KAFKA_OPTS"
+            value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+          - name: "GROUP_ID"
+            value: "connect-mysql"
           - name: "KUBERNETES_NAMESPACE"
             valueFrom:
               fieldRef:
                 fieldPath: "metadata.namespace"
-          image: "docker.io/debezium/zookeeper:0.3"
+          image: "docker.io/debezium/connect:0.3"
           imagePullPolicy: "IfNotPresent"
-          name: "zk-standalone"
+          name: "connect-mysql"
           ports:
-          - containerPort: 3888
-            name: "election"
-          - containerPort: 2888
-            name: "peer"
-          - containerPort: 2181
-            name: "client"
+          - containerPort: 8083
+            name: "rest"
+          - containerPort: 5005
+            name: "debug"
           securityContext: {}
           volumeMounts: []
         imagePullSecrets: []
